@@ -35,16 +35,16 @@ def tree(model):
         for key in model.keys():
             model[key]['len_encode'] = 1
         return model
-    #print(model)
+    # print(model)
     tree = [([key], value["num"]) for key, value in model.items()]
     tree = sorted(tree, key=lambda item: item[1])
-    #print("tree:", tree)
+    # print("tree:", tree)
     while len(tree) > 2:
         elem_1 = tree.pop(0)
         elem_2 = tree.pop(0)
         tree.append((elem_1[0] + elem_2[0], elem_1[1] + elem_2[1]))
-        #print("\ntree:", tree)
-        #print(elem_1[0])
+        # print("\ntree:", tree)
+        # print(elem_1[0])
         for elem in elem_1[0]:
             model[elem]['encode'] = model[elem]['encode']
             model[elem]['len_encode'] += 1
@@ -52,15 +52,15 @@ def tree(model):
             model[elem]['encode'] = (1 << model[elem]['len_encode']) + model[elem]['encode']
             model[elem]['len_encode'] += 1
         tree = sorted(tree, key=lambda item: item[1])
-        #print("\nmodel:", model)
-        #print("\ntree:", tree)
+        # print("\nmodel:", model)
+        # print("\ntree:", tree)
     for elem in tree[0][0]:
         model[elem]['encode'] = model[elem]['encode']
         model[elem]['len_encode'] += 1
     for elem in tree[1][0]:
         model[elem]['encode'] = (1 << model[elem]['len_encode']) + model[elem]['encode']
         model[elem]['len_encode'] += 1
-    #print(model)
+    # print(model)
     return model
 
 
@@ -73,7 +73,7 @@ def first_iter(file):
 
 def fill_model(f, model):
     max_len_encode = (max(model.values(), key=lambda item: item["len_encode"])['len_encode'] + 7) // 8
-    print(max_len_encode)
+    # print(max_len_encode)
     f.write(len(model).to_bytes(1, "big"))
     f.write(max_len_encode.to_bytes(1, "big"))
     for key, value in model.items():
@@ -100,7 +100,7 @@ def second_iter(file, model):
                         s = s % 2**(s_len - 8)
                         s_len = s_len - 8
                 b = rf.read(1)
-            print(s)
+            # print(s)
             if s_len > 0:
                 wf.write(s.to_bytes(1, 'big'))
             wf.write(s_len.to_bytes(1, "big"))
@@ -114,7 +114,7 @@ def encode(file):
         f.close()
         return 0
     second_iter(file, model)
-    print("model:", model)
+    # print("model:", model)
     return 0
 
 
@@ -168,7 +168,7 @@ def get_encoded(s, s_len, max_len_encode, model, f):
         search = next((key for key, value in model.items()
                        if value['encode'] == temp and value['len_encode'] == len_decode), None)
         if search:
-            print(i)
+            # print(i)
             f.write(search)
             s_len = s_len - i
             s = s % (2**s_len)
@@ -182,7 +182,7 @@ def encode_last(s, s_len, model, f):
     i = 1
     while i <= s_len:
         temp = (s >> (s_len - i))
-        #print(temp)
+        # print(temp)
         len_decode = i
         search = next((key for key, value in model.items()
                        if value['encode'] == temp and value['len_encode'] == len_decode), None)
@@ -193,7 +193,7 @@ def encode_last(s, s_len, model, f):
             i = 1
             continue
         i += 1
-    print(s, s_len)
+    # print(s, s_len)
     if s != 0 or s_len != 0:
         exit("Error: wrong file")
     return 0
@@ -201,8 +201,8 @@ def encode_last(s, s_len, model, f):
 def decode(file):
     with open(file, "rb") as rf:
         model, max_len_encode = get_model(rf)
-        print("model:", model)
-        print(len(model))
+        # print("model:", model)
+        # print(len(model))
         if model is None or model == {}:
             f = open(file.rsplit('.', 1)[0], "wb")
             f.close()
@@ -213,9 +213,9 @@ def decode(file):
             b = rf.read(1)
             if b == b'':
                 exit("Error: there is model but no text.")
-            print(b)
+            # print(b)
             next_b = rf.read(1)
-            print(max_len_encode)
+            # print(max_len_encode)
             while next_b != b'':
                 s = (s << 8) + int.from_bytes(b, "big")
                 s_len += 8
@@ -243,39 +243,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-'''model = {
-    'hi': {
-        'encode': 2,
-        'len_encode': 2
-    }
-}'''
-'''i = 16
-f = open("test1", "wb")
-# Create one byte from the integer 16
-single_byte = i.to_bytes(1, byteorder='big')
-print(single_byte)
-f.write(single_byte)
-
-# Create four bytes from the integer
-four_bytes = i.to_bytes(4, byteorder='big')
-print(four_bytes)
-f.write(four_bytes)
-
-# Compare the difference to little endian
-print(i.to_bytes(4, byteorder='little'))
-f.write(i.to_bytes(4, byteorder='little'))
-# Create bytes from a list of integers with values from 0-255
-bytes_from_list = bytes([255, 254, 253, 252])
-print(bytes_from_list)
-
-# Create a byte from a base 2 integer
-one_byte = int('11110000', 2)
-print(one_byte)
-
-# Print out binary string (e.g. 0b010010)
-print(bin(22))'''
-#print(next((key for key, value in model.items() if value['encode'] == 2 and value['len_encode'] == 2), None))
-b = b'\x00'
-print(b)
